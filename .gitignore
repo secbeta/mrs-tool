@@ -1,0 +1,8 @@
+node_modules/
+dist/
+dist-tsc/
+out/
+*.vsix
+*.tgz
+.vscode-test/
+scripts/local.json

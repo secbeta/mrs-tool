@@ -1,0 +1,17 @@
+# npm pack（CLI 分发）：只发 dist/ bin/ README.md media/。
+# 注意：本文件存在时 .gitignore 被忽略 → dist/（git 里忽略）得以进包。
+# vsix 打包走 .vscodeignore，与此互补（vsce 不允许 package.json "files" 与 .vscodeignore 并存）。
+src
+test
+scripts
+node_modules
+out
+dist-tsc
+esbuild.js
+tsconfig.json
+tsconfig.emit.json
+*.vsix
+.gitignore
+.vscode
+.vscode-test
+dist/*.map

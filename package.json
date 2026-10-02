@@ -1,0 +1,619 @@
+{
+  "name": "mrs-toolbox",
+  "displayName": "MRS Toolbox",
+  "description": "Build, flash and debug WCH projects in VS Code using the MounRiver Studio 2 toolchain. Create projects from templates or examples (RISC-V & ARM).",
+  "version": "0.2.17",
+  "publisher": "mrs-toolbox",
+  "license": "MIT",
+  "icon": "media/icon.png",
+  "extensionKind": [
+    "ui"
+  ],
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Embedded",
+    "Programming Languages",
+    "Debuggers"
+  ],
+  "keywords": [
+    "wch",
+    "mounriver",
+    "ch32",
+    "risc-v",
+    "embedded",
+    "ble"
+  ],
+  "main": "./dist/extension.js",
+  "bin": {
+    "mrs-toolbox": "bin/mrs-toolbox.js"
+  },
+  "activationEvents": [
+    "workspaceContains:**/.mrs-project.json"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "mrsToolbox.setup",
+        "title": "Setup: Locate MounRiver Studio",
+        "category": "MRS Toolbox"
+      },
+      {
+        "command": "mrsToolbox.setMounriverPath",
+        "title": "Set MounRiver Studio Path",
+        "category": "MRS Toolbox"
+      },
+      {
+        "command": "mrsToolbox.createNewProject",
+        "title": "Create New Project (from template)",
+        "category": "MRS Toolbox",
+        "icon": "$(new-folder)"
+      },
+      {
+        "command": "mrsToolbox.createProjectFromExample",
+        "title": "Create Project from Example",
+        "category": "MRS Toolbox",
+        "icon": "$(play)"
+      },
+      {
+        "command": "mrsToolbox.importProject",
+        "title": "Import Existing Sources as Project",
+        "category": "MRS Toolbox",
+        "icon": "$(folder-opened)"
+      },
+      {
+        "command": "mrsToolbox.selectProject",
+        "title": "Select Active Project",
+        "category": "MRS Toolbox"
+      },
+      {
+        "command": "mrsToolbox.build",
+        "title": "Build Project",
+        "category": "MRS Toolbox",
+        "icon": "$(gear)"
+      },
+      {
+        "command": "mrsToolbox.clean",
+        "title": "Clean Project",
+        "category": "MRS Toolbox"
+      },
+      {
+        "command": "mrsToolbox.rebuild",
+        "title": "Rebuild Project (clean + build)",
+        "category": "MRS Toolbox"
+      },
+      {
+        "command": "mrsToolbox.setBuildConfiguration",
+        "title": "Set Build Configuration (debug/release)",
+        "category": "MRS Toolbox"
+      },
+      {
+        "command": "mrsToolbox.switchMcu",
+        "title": "Switch MCU (same series, e.g. CH582F → CH582M)",
+        "category": "MRS Toolbox"
+      },
+      {
+        "command": "mrsToolbox.flash",
+        "title": "Flash Project",
+        "category": "MRS Toolbox",
+        "icon": "$(zap)"
+      },
+      {
+        "command": "mrsToolbox.buildAndFlash",
+        "title": "Build and Flash Project",
+        "category": "MRS Toolbox"
+      },
+      {
+        "command": "mrsToolbox.eraseChip",
+        "title": "Erase Chip",
+        "category": "MRS Toolbox"
+      },
+      {
+        "command": "mrsToolbox.ispFlash",
+        "title": "Flash via ISP (USB/Serial Bootloader, no WCH-Link)",
+        "category": "MRS Toolbox"
+      },
+      {
+        "command": "mrsToolbox.debug",
+        "title": "Debug Project",
+        "category": "MRS Toolbox"
+      },
+      {
+        "command": "mrsToolbox.generateBuildFiles",
+        "title": "Generate Build Files (Makefile)",
+        "category": "MRS Toolbox"
+      },
+      {
+        "command": "mrsToolbox.generateIntellisenseConfig",
+        "title": "Generate IntelliSense Configuration",
+        "category": "MRS Toolbox"
+      },
+      {
+        "command": "mrsToolbox.openInMounRiver",
+        "title": "Open Project in MounRiver Studio 2",
+        "category": "MRS Toolbox"
+      },
+      {
+        "command": "mrsToolbox.openWchLinkUtility",
+        "title": "Open WCH-LinkUtility",
+        "category": "MRS Toolbox"
+      },
+      {
+        "command": "mrsToolbox.openComTransmit",
+        "title": "Open Serial Tool (COMTransmit)",
+        "category": "MRS Toolbox"
+      },
+      {
+        "command": "mrsToolbox.openHexBinStudio",
+        "title": "Open HEX/BIN Tool (HexBinStudio)",
+        "category": "MRS Toolbox"
+      },
+      {
+        "command": "mrsToolbox.openKeilConvert",
+        "title": "Open Keil Project Converter",
+        "category": "MRS Toolbox"
+      },
+      {
+        "command": "mrsToolbox.openIspTool",
+        "title": "Open WCH ISP Tool (USB Bootloader Flash)",
+        "category": "MRS Toolbox"
+      },
+      {
+        "command": "mrsToolbox.openTouchKeyTool",
+        "title": "Open WCH Touch Key Calibration Tool",
+        "category": "MRS Toolbox"
+      },
+      {
+        "command": "mrsToolbox.openDeviceManager",
+        "title": "Open Device Manager",
+        "category": "MRS Toolbox"
+      },
+      {
+        "command": "mrsToolbox.openSerialTerminal",
+        "title": "Open Serial Terminal (Serial Monitor)",
+        "category": "MRS Toolbox"
+      },
+      {
+        "command": "mrsToolbox.installLinkDriver",
+        "title": "Install WCH-Link / ISP Driver",
+        "category": "MRS Toolbox"
+      },
+      {
+        "command": "mrsToolbox.showSerialPorts",
+        "title": "Show Serial Ports",
+        "category": "MRS Toolbox"
+      },
+      {
+        "command": "mrsToolbox.copySerialPort",
+        "title": "Copy Serial Port",
+        "category": "MRS Toolbox"
+      },
+      {
+        "command": "mrsToolbox.refreshSerialPorts",
+        "title": "Refresh Serial Ports",
+        "category": "MRS Toolbox"
+      },
+      {
+        "command": "mrsToolbox.scanBleDevices",
+        "title": "Scan BLE Devices",
+        "category": "MRS Toolbox"
+      },
+      {
+        "command": "mrsToolbox.openBleDebug",
+        "title": "Open BLE Debug Tool (BLEDebug)",
+        "category": "MRS Toolbox"
+      },
+      {
+        "command": "mrsToolbox.refreshExamples",
+        "title": "Refresh Examples",
+        "category": "MRS Toolbox",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "mrsToolbox.configure",
+        "title": "Open Configuration Page",
+        "category": "MRS Toolbox",
+        "icon": "$(settings-gear)"
+      },
+      {
+        "command": "mrsToolbox.addExamplesLibrary",
+        "title": "Add Examples Library",
+        "category": "MRS Toolbox",
+        "icon": "$(add)"
+      },
+      {
+        "command": "mrsToolbox.removeExamplesLibrary",
+        "title": "Remove Examples Library",
+        "category": "MRS Toolbox",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "mrsToolbox.generateAiSkills",
+        "title": "Generate AI Skills for Examples Libraries",
+        "category": "MRS Toolbox"
+      }
+    ],
+    "keybindings": [
+      {
+        "key": "F7",
+        "command": "mrsToolbox.build",
+        "when": "mrsToolbox.active"
+      },
+      {
+        "key": "Shift+F7",
+        "command": "mrsToolbox.rebuild",
+        "when": "mrsToolbox.active"
+      },
+      {
+        "key": "F8",
+        "command": "mrsToolbox.flash",
+        "when": "mrsToolbox.active"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "mrs-toolbox",
+          "title": "MRS Toolbox",
+          "icon": "media/wch.svg"
+        }
+      ]
+    },
+    "views": {
+      "mrs-toolbox": [
+        {
+          "id": "mrsToolbox.home",
+          "name": "MRS Toolbox"
+        },
+        {
+          "id": "mrsToolbox.examples",
+          "name": "Examples"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "mrsToolbox.home",
+        "when": "!mrsToolbox.installed",
+        "contents": "No MounRiver Studio 2 installation found.\n[Setup: Locate MounRiver Studio](command:mrsToolbox.setup)\nTo learn more: [read the docs](https://www.mounriver.com/)"
+      },
+      {
+        "view": "mrsToolbox.home",
+        "when": "mrsToolbox.installed && !mrsToolbox.active",
+        "contents": "No MRS Toolbox project in this workspace.\n[Create New Project](command:mrsToolbox.createNewProject)\n[Create Project from Example](command:mrsToolbox.createProjectFromExample)\n[Import Existing Sources](command:mrsToolbox.importProject)"
+      },
+      {
+        "view": "mrsToolbox.examples",
+        "when": "!mrsToolbox.installed",
+        "contents": "Examples need a MounRiver Studio 2 installation.\n[Run Setup](command:mrsToolbox.setup)"
+      },
+      {
+        "view": "mrsToolbox.examples",
+        "when": "mrsToolbox.installed && mrsToolbox.examplesEmpty",
+        "contents": "尚未添加例程库。\n[添加例程库…](command:mrsToolbox.addExamplesLibrary)\n[打开配置页面](command:mrsToolbox.configure)\n已把例程放到别的目录？[刷新例程](command:mrsToolbox.refreshExamples)"
+      }
+    ],
+    "problemMatchers": [
+      {
+        "name": "mrs-toolbox-gcc",
+        "owner": "mrs-toolbox-gcc",
+        "fileLocation": [
+          "relative",
+          "${workspaceFolder}"
+        ],
+        "pattern": {
+          "regexp": "^(.+?):(\\d+):(\\d+):\\s+(?:fatal\\s+)?(error|warning|note):\\s+(.*)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "severity": 4,
+          "message": 5
+        }
+      }
+    ],
+    "walkthroughs": [
+      {
+        "id": "mrs-toolbox.getting-started",
+        "title": "MRS Toolbox 入门",
+        "description": "复用 MounRiver Studio 2 工具链，在 VS Code 里完成 WCH 工程的创建、编译、烧录与调试。",
+        "featuredFor": [
+          "**/.mrs-project.json"
+        ],
+        "steps": [
+          {
+            "id": "locate",
+            "title": "定位 MounRiver Studio 2",
+            "description": "扩展复用本机已安装的 MRS2 工具链（不捆绑任何二进制）。运行 Setup 自动探测安装位置；探测失败可在配置页面手动浏览选择。",
+            "media": {
+              "markdown": "media/docs/walkthrough-setup.md"
+            },
+            "completionEvents": [
+              "onCommand:mrsToolbox.setup"
+            ]
+          },
+          {
+            "id": "configure",
+            "title": "图形化配置",
+            "description": "打开配置页面：查看解析出的工具链/芯片库、添加或移除例程库（可多个并存）、调整烧录与调试选项。",
+            "media": {
+              "markdown": "media/docs/walkthrough-configure.md"
+            },
+            "completionEvents": [
+              "onCommand:mrsToolbox.configure"
+            ]
+          },
+          {
+            "id": "create",
+            "title": "建立工程",
+            "description": "三种方式：模板向导新建、在 Examples 视图浏览例程一键建工程、导入已有源码目录。",
+            "media": {
+              "markdown": "media/docs/walkthrough-create.md"
+            },
+            "completionEvents": [
+              "onCommand:mrsToolbox.createNewProject",
+              "onCommand:mrsToolbox.createProjectFromExample",
+              "onCommand:mrsToolbox.importProject"
+            ]
+          },
+          {
+            "id": "build",
+            "title": "编译 / 烧录 / 调试",
+            "description": "F7 编译、Shift+F7 重建、F8 经 WCH-Link 烧录、F5 进入 OpenOCD+GDB 断点调试。",
+            "media": {
+              "markdown": "media/docs/walkthrough-build.md"
+            },
+            "completionEvents": [
+              "onCommand:mrsToolbox.build"
+            ]
+          }
+        ]
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "mrsToolbox.configure",
+          "when": "view == mrsToolbox.home",
+          "group": "navigation@0"
+        },
+        {
+          "command": "mrsToolbox.createNewProject",
+          "when": "view == mrsToolbox.home",
+          "group": "navigation@1"
+        },
+        {
+          "command": "mrsToolbox.importProject",
+          "when": "view == mrsToolbox.home",
+          "group": "navigation@2"
+        },
+        {
+          "command": "mrsToolbox.setup",
+          "when": "view == mrsToolbox.home",
+          "group": "navigation@3"
+        },
+        {
+          "command": "mrsToolbox.addExamplesLibrary",
+          "when": "view == mrsToolbox.examples",
+          "group": "navigation@1"
+        },
+        {
+          "command": "mrsToolbox.refreshExamples",
+          "when": "view == mrsToolbox.examples",
+          "group": "navigation@2"
+        }
+      ],
+      "view/item": [
+        {
+          "command": "mrsToolbox.build",
+          "when": "view == mrsToolbox.home && viewItem == action",
+          "group": "inline@1"
+        },
+        {
+          "command": "mrsToolbox.flash",
+          "when": "view == mrsToolbox.home && viewItem == action",
+          "group": "inline@2"
+        },
+        {
+          "command": "mrsToolbox.createProjectFromExample",
+          "when": "view == mrsToolbox.examples && viewItem == example",
+          "group": "inline@1"
+        },
+        {
+          "command": "mrsToolbox.removeExamplesLibrary",
+          "when": "view == mrsToolbox.examples && viewItem == library",
+          "group": "inline@1"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "mrsToolbox.build",
+          "when": "mrsToolbox.active"
+        },
+        {
+          "command": "mrsToolbox.clean",
+          "when": "mrsToolbox.active"
+        },
+        {
+          "command": "mrsToolbox.rebuild",
+          "when": "mrsToolbox.active"
+        },
+        {
+          "command": "mrsToolbox.flash",
+          "when": "mrsToolbox.active"
+        },
+        {
+          "command": "mrsToolbox.buildAndFlash",
+          "when": "mrsToolbox.active"
+        },
+        {
+          "command": "mrsToolbox.debug",
+          "when": "mrsToolbox.active"
+        },
+        {
+          "command": "mrsToolbox.eraseChip",
+          "when": "mrsToolbox.active"
+        },
+        {
+          "command": "mrsToolbox.ispFlash",
+          "when": "mrsToolbox.active"
+        },
+        {
+          "command": "mrsToolbox.selectProject",
+          "when": "mrsToolbox.active"
+        },
+        {
+          "command": "mrsToolbox.setBuildConfiguration",
+          "when": "mrsToolbox.active"
+        },
+        {
+          "command": "mrsToolbox.switchMcu",
+          "when": "mrsToolbox.active"
+        },
+        {
+          "command": "mrsToolbox.generateBuildFiles",
+          "when": "mrsToolbox.active"
+        },
+        {
+          "command": "mrsToolbox.generateIntellisenseConfig",
+          "when": "mrsToolbox.active"
+        },
+        {
+          "command": "mrsToolbox.openInMounRiver",
+          "when": "mrsToolbox.active"
+        },
+        {
+          "command": "mrsToolbox.copySerialPort",
+          "when": "false"
+        },
+        {
+          "command": "mrsToolbox.refreshSerialPorts",
+          "when": "false"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "MRS Toolbox",
+      "properties": {
+        "mrsToolbox.mounriverStudioPath": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "MounRiver Studio 2 installation root. Leave empty for auto-detection (scans common locations and drives)."
+        },
+        "mrsToolbox.examplesDirectory": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Legacy: single examples library directory. Prefer `mrsToolbox.examplesDirectories` (list); both are merged and deduplicated."
+        },
+        "mrsToolbox.examplesDirectories": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "markdownDescription": "Directories holding WCH EVT example libraries (folders like `CH32V00x`, `CH32F103`, `CH583` containing `EVT/EXAM/...`). Add or remove libraries from the Examples view or the configuration page."
+        },
+        "mrsToolbox.toolchainOverride.gcc8": {
+          "type": "string",
+          "default": "",
+          "description": "Advanced: override RISC-V GCC8 bin directory."
+        },
+        "mrsToolbox.toolchainOverride.gcc12": {
+          "type": "string",
+          "default": "",
+          "description": "Advanced: override RISC-V GCC12 bin directory."
+        },
+        "mrsToolbox.toolchainOverride.arm": {
+          "type": "string",
+          "default": "",
+          "description": "Advanced: override ARM GCC bin directory."
+        },
+        "mrsToolbox.openocdPath": {
+          "type": "string",
+          "default": "",
+          "description": "Advanced: override OpenOCD executable path."
+        },
+        "mrsToolbox.debug.provider": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "cortex-debug",
+            "cppdbg"
+          ],
+          "default": "auto",
+          "description": "Debug configuration provider: cortex-debug (SVD peripheral view) or cpptools cppdbg (always available)."
+        },
+        "mrsToolbox.openocd.gdbPort": {
+          "type": "number",
+          "default": 3333
+        },
+        "mrsToolbox.openocd.telnetPort": {
+          "type": "number",
+          "default": 4444
+        },
+        "mrsToolbox.openocd.tclPort": {
+          "type": "number",
+          "default": 6666
+        },
+        "mrsToolbox.flash.verify": {
+          "type": "boolean",
+          "default": true
+        },
+        "mrsToolbox.flash.eraseMode": {
+          "type": "string",
+          "enum": [
+            "chip-default",
+            "sectors-only"
+          ],
+          "default": "chip-default"
+        },
+        "mrsToolbox.ispToolPath": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Path to `wchisp` executable for ISP flashing (USB/serial bootloader, no WCH-Link). Leave empty to look it up in MRS2's WCHISPTool directory (the recommended drop-in spot — its CH375DLL64.dll dependency already lives there) and on PATH. Get it from https://github.com/ch32-rs/wchisp/releases/tag/nightly."
+        },
+        "mrsToolbox.aiSkillsDir": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Output directory for `Generate AI Skills` (one SKILL.md per examples library). Empty = `~/.claude/skills` (Claude Code auto-discovers skills there; other AI assistants can read the files directly). Rerun the command after adding/removing examples — it only overwrites files it generated."
+        },
+        "mrsToolbox.bleDebugPath": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Path to the WCH `BLEDebug` GUI executable (BLE debugging assistant; NOT bundled with MRS2 — download from https://www.wch.cn/downloads/BLEDebug_ZIP.html, run the self-extractor, then point this setting at `BLEDebug.exe`). Empty = look up `BLEDebug.exe` on PATH. The AI-callable BLE features (`ble-scan` / `ble` CLI, Scan BLE Devices command) don't need this tool — they use the Windows Bluetooth stack directly."
+        },
+        "mrsToolbox.intellisense.generateCompileCommands": {
+          "type": "boolean",
+          "default": false,
+          "description": "Also generate obj/compile_commands.json for IntelliSense."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package --omicron",
+    "compile": "node esbuild.js",
+    "watch": "node esbuild.js --watch",
+    "compile:tests": "tsc -p tsconfig.emit.json",
+    "test": "npm run compile && npm run compile:tests && node test/unit/run.js",
+    "verify": "npm run compile:tests && node scripts/verify-e2e.js",
+    "integration": "npm run compile && node test/suite/run.js",
+    "package": "npm run check-types && node esbuild.js --production",
+    "check-types": "tsc -p ./",
+    "lint": "tsc -p ./"
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.16"
+  },
+  "devDependencies": {
+    "@types/adm-zip": "^0.5.5",
+    "@types/mocha": "^10.0.7",
+    "@types/node": "^20.14.0",
+    "@types/vscode": "^1.80.0",
+    "@vscode/test-electron": "^2.4.0",
+    "@vscode/vsce": "^3.1.0",
+    "esbuild": "^0.23.0",
+    "mocha": "^10.7.0",
+    "typescript": "^5.5.4"
+  }
+}
