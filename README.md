@@ -1,24 +1,51 @@
 # MRS Toolbox
 
-在 VS Code 里使用 **MounRiver Studio 2** 的工具链完成 WCH 单片机的开发：
+在 VS Code 里使用 **MounRiver Studio 2/3** 的工具链完成 WCH 单片机的开发：
 新建工程、浏览例程库一键建工程、导入已有源码、编译、WCH-Link 烧录、
 OpenOCD + GDB 断点调试、IntelliSense 配置生成。RISC-V 与 ARM 芯片全支持。
 
 类似 ESP-IDF 扩展的体验，但**不捆绑任何工具链** —— 直接复用本机已安装的
-MounRiver Studio 2（编译器 / make / OpenOCD / SDK 模板 / SVD）。
+MounRiver Studio 2 或 3（VS Code 内核版，组件布局同构；编译器 / make /
+OpenOCD / SDK 模板 / SVD）。
 
 ## 前置条件
 
-- Windows + [MounRiver Studio 2](https://www.mounriver.com/)（已安装即可，
-  不需要运行它；路径可在设置里手动指定）
+- [MounRiver Studio 2 或 3](https://www.mounriver.com/)（已安装即可，不需要
+  运行它；**MRS3** 为 VS Code 内核版本，组件布局与 MRS2 同构，Setup 同样
+  自动探测；路径可在设置里手动指定）
+  - **Windows**：任意盘符下安装即可，Setup 自动探测（也扫全盘）
+  - **Linux**：官网下载 MRS2 Linux 包解压（如解到 `~/Downloads/MRS2/`），
+    得到 `MRS-linux-x64/` 安装根 —— Setup 会探测 `~/Downloads`、`~`、`/opt`、
+    `/usr/share`、`/usr/local` 下的解压目录或安装根本身，手动浏览选中
+    解压目录也可以
 - VS Code ≥ 1.80
+- 操作系统：**Windows 全功能**；**Linux** 自 0.2.18 起支持（编译 / 烧录 /
+  调试 / 串口可用，GUI 工具差异见下节「Linux 差异说明」）；macOS 按 Linux
+  布局处理（未经实测）
 - 可选：[Cortex-Debug](https://marketplace.visualstudio.com/items?itemName=marus25.cortex-debug)
   扩展（SVD 外设寄存器视图）；未安装时自动使用 cpptools (cppdbg) 调试配置
 
+### Linux 差异说明
+
+编译、WCH-Link 烧录（openocd）、断点调试、ISP 烧录（wchisp）、串口枚举 /
+串口会话在 Linux 上全部可用；差异只有：
+
+- **设备权限**：Linux 没有（也不需要）Windows 驱动安装器 —— 运行命令
+  **Install WCH-Link / ISP Driver** 会给出把 MRS2 自带 udev 规则
+  （`beforeinstall/*.rules`）装入 `/etc/udev/rules.d` 的一键复制命令；或者
+  把用户加入 `dialout` 组（`sudo usermod -aG dialout $USER` 后重新登录）
+- **GUI 工具**：WCH-LinkUtility / WchIspStudio / COMTransmit / HexBinStudio /
+  Keil 转换器 / 触摸按键校准等仅随 Windows 版 MRS2 发行，Linux 侧边栏自动
+  隐藏（命令行等价能力不受影响：烧录用 F8 / ISP，串口用 Serial Monitor 扩展）
+- **BLE 调试**（`ble-scan` / `ble`）：基于 Windows WinRT 蓝牙栈，Linux 暂不可用
+  （可用系统 `bluetoothctl` 等替代）
+- **wchisp**：无需 DLL / 驱动 —— `cargo install wchisp` 或下载发行包后
+  `chmod +x` 即可
+
 ## 快速开始
 
-1. 安装扩展（`mrs-toolbox-0.2.17.vsix`：`code --install-extension mrs-toolbox-0.2.17.vsix`）
-2. 运行命令 **MRS Toolbox: Setup** —— 自动探测 MRS2 安装并在输出面板
+1. 安装扩展（`mrs-toolbox-0.2.18.vsix`：`code --install-extension mrs-toolbox-0.2.18.vsix`）
+2. 运行命令 **MRS Toolbox: Setup** —— 自动探测 MRS2/MRS3 安装并在输出面板
    打印摘要（工具链、芯片库、openocd 路径）
 3. 打开**配置页面**（命令 **MRS Toolbox: Open Configuration Page**，或
    侧边栏 / 状态栏的齿轮图标）：像 ESP-IDF 扩展一样图形化配置 ——

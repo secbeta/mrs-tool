@@ -50,7 +50,7 @@ async function resolveInst(args: Args): Promise<MrsInstallation> {
       return inst;
     }
   }
-  die('未找到 MounRiver Studio 2 安装', explicit ? `检查路径 ${explicit}` : '用 --mrs <安装根目录> 指定，或安装 MRS2');
+  die('未找到 MounRiver Studio 2/3 安装', explicit ? `检查路径 ${explicit}` : '用 --mrs <安装根目录> 指定，或安装 MRS2/MRS3');
 }
 
 /** 从起始目录向上找 .mrs-project.json（最多 6 层）；找不到返回 undefined。 */
@@ -89,7 +89,7 @@ async function cmdDoctor(args: Args): Promise<number> {
   const riscv = inst.chipDb.series.filter((s) => s.type === 'RISC-V').length;
   const arm = inst.chipDb.series.filter((s) => s.type === 'ARM').length;
   const mcus = inst.chipDb.series.reduce((n, s) => n + s.mcus.length, 0);
-  ok(`MounRiver Studio 2 @ ${inst.root}`);
+  ok(`MounRiver Studio @ ${inst.root}`);
   ok(`toolchains : ${inst.toolchains.names.join(', ')}`);
   ok(`chip db    : ${riscv} RISC-V + ${arm} ARM 系列 / ${mcus} MCU`);
   ok(`make       : ${inst.makeExe}`);
@@ -97,7 +97,14 @@ async function cmdDoctor(args: Args): Promise<number> {
   const ispTool = await resolveIspTool(args.opt.get('tool'), inst);
   ok(`isp(wchisp): ${ispTool ?? `未安装 — ISP 直连烧录不可用（下载 ${WCHISP_DOWNLOAD}）`}`);
   const radio = await bleRadioName();
-  ok(`ble(radio) : ${radio ?? '未检测到 — BLE 调试不可用（插 USB 蓝牙适配器并开启蓝牙）'}`);
+  ok(
+    `ble(radio) : ${
+      radio ??
+      (process.platform === 'win32'
+        ? '未检测到 — BLE 调试不可用（插 USB 蓝牙适配器并开启蓝牙）'
+        : '仅 Windows 可用（WinRT 蓝牙栈）')
+    }`,
+  );
   // doctor 允许无工程环境纯检查（resolveProjectDir 会 process.exit，故走 findProjectDir）
   const dir = findProjectDir(path.resolve(args.pos[0] ?? '.'));
   if (dir) {

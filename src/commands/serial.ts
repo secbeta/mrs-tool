@@ -21,7 +21,9 @@ export async function runShowSerialPorts(tbx: ToolboxContext): Promise<void> {
   );
   if (ports.length === 0) {
     const act = await vscode.window.showInformationMessage(
-      '未检测到串口设备。插上开发板或 WCH-Link 后重试；仍看不到时通常是缺串口驱动（CH343/CH340）。',
+      process.platform === 'win32'
+        ? '未检测到串口设备。插上开发板或 WCH-Link 后重试；仍看不到时通常是缺串口驱动（CH343/CH340）。'
+        : '未检测到串口设备。插上开发板或 WCH-Link 后重试；仍看不到时确认 /dev/ttyUSB*、/dev/ttyACM* 是否出现（dmesg | tail），无权限时需安装 udev 规则或把用户加入 dialout 组。',
       '重试',
       '安装驱动…',
     );

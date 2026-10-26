@@ -143,7 +143,9 @@ export async function pickMounriverRoot(current?: string): Promise<string | unde
   items.push({ label: '浏览…', path: '' });
   const picked = await step(vscode.window.showQuickPick(items, { placeHolder: '选择 MounRiver Studio 2 安装目录' }));
   if (picked.path === '') {
-    const folder = await step(pickFolder(vscode.Uri.file(current ?? 'C:\\')));
+    // Linux/macOS 下浏览默认从家目录开始（Windows 保持 C:\）。
+    const defaultDir = current ?? (process.platform === 'win32' ? 'C:\\' : require('os').homedir());
+    const folder = await step(pickFolder(vscode.Uri.file(defaultDir)));
     return folder.fsPath;
   }
   return picked.path;

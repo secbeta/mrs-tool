@@ -29,7 +29,11 @@ export function renderMakefile(proj: MrsProject, inst: MrsInstallation): string 
   lines.push(`#  Project : ${b.targetName}    Series : ${proj.mcu.series}    MCU : ${proj.mcu.mcuId}`);
   lines.push(`#  Toolchain: ${proj.mcu.toolchainType} / ${proj.mcu.toolchainName}  (${prefix})`);
   lines.push('#  Targets: make [all] | make clean | make rebuild   (CONFIG=debug|release)');
-  lines.push('#  NOTE: run through the extension, or have MRS2 Make\\bin (sh.exe) on PATH.');
+  lines.push(
+    process.platform === 'win32'
+      ? '#  NOTE: run through the extension, or have MRS2 Make\\bin (sh.exe) on PATH.'
+      : '#  NOTE: run through the extension, or have MRS2 Make/bin and the toolchain bin on PATH.',
+  );
   lines.push('# ============================================================================');
   lines.push('');
   lines.push(`TARGET        := ${b.targetName}`);

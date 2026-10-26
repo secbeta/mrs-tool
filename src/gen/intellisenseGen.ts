@@ -19,7 +19,10 @@ export async function generateIntellisense(
     throw new Error(`toolchain ${proj.mcu.toolchainName} not found in MRS2`);
   }
 
-  const gccPath = path.join(toolchain.binDir, toolchain.prefix + 'gcc.exe');
+  const gccPath = path.join(
+    toolchain.binDir,
+    toolchain.prefix + 'gcc' + (process.platform === 'win32' ? '.exe' : ''),
+  );
 
   // Header dirs mirror the Makefile's recursive scan over srcDirs + libDirs.
   const headerDirs = new Set<string>(['${workspaceFolder}']);

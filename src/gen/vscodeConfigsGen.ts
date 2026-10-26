@@ -22,7 +22,9 @@ export async function generateDebugConfigs(
     throw new Error(`toolchain ${proj.mcu.toolchainName} not resolved`);
   }
 
-  const gdb = toPosix(path.join(toolchain.binDir, toolchain.prefix + 'gdb.exe'));
+  const gdb = toPosix(
+    path.join(toolchain.binDir, toolchain.prefix + 'gdb' + (process.platform === 'win32' ? '.exe' : '')),
+  );
   const openocdExe = toPosix(inst.openocdExe);
   const openocdScripts = toPosix(inst.openocdScripts);
   const openocdCfg = toPosix(

@@ -1,22 +1,25 @@
+import * as fs from 'fs';
+import * as path from 'path';
 import { runProcess } from '../util/proc';
 
-/** One COM port as Windows sees it, with the adapter behind it. */
+/** One serial port as the OS sees it, with the adapter behind it. */
 export interface SerialPortInfo {
-  /** "COM7" */
+  /** "COM7" (Windows) or "/dev/ttyUSB0" (Linux). */
   port: string;
-  /** PnP caption, e.g. "USB-SERIAL CH340 (COM7)". */
+  /** Adapter caption, e.g. "USB-SERIAL CH340 (COM7)" / "USB-SERIAL CH340". */
   name: string;
-  /** PnP instance id (carries VID/PID), when known. */
+  /** Windows PnP instance id or the /dev/serial/by-id name (carries VID/PID). */
   pnpId?: string;
   /** WCH USB adapter (CH340/CH343/WCH-Link virtual COM …). */
   isWch: boolean;
 }
 
 /**
- * Enumerate COM ports without native dependencies. Primary source is
- * PowerShell over Win32_PnPEntity (captions like "USB-SERIAL CH340 (COM7)"
- * name the adapter, so the user can tell which port the board is on);
+ * Enumerate serial ports without native dependencies.
+ * Windows: PowerShell over Win32_PnPEntity (captions like "USB-SERIAL CH340
+ * (COM7)" name the adapter, so the user can tell which port the board is on);
  * `reg query SERIALCOMM` is the fallback when PowerShell is unavailable.
+ * Linux/macOS: /dev 下的 tty 设备 + sysfs 读 USB 厂商/产品名（VID 1a86 = WCH）。
  * Results are cached briefly so expanding the tree doesn't re-spawn shells.
  */
 
@@ -28,6 +31,9 @@ const PS_SCRIPT =
 
 const REG_KEY = 'HKLM\\HARDWARE\\DEVICEMAP\\SERIALCOMM';
 
+/** /dev 下参与枚举的 tty 设备（USB 串口 / CDC-ACM / 硬件 UART / 蓝牙 RFCOMM）。 */
+const LINUX_TTY_RE = /^tty(USB\d+|ACM\d+|S\d+)$|^rfcomm\d+$/;
+
 const CACHE_TTL_MS = 3000;
 let cache: { at: number; ports: SerialPortInfo[] } | undefined;
 
@@ -36,18 +42,15 @@ export function invalidateSerialPorts(): void {
 }
 
 export async function listSerialPorts(): Promise<SerialPortInfo[]> {
-  if (process.platform !== 'win32') {
-    return [];
-  }
   if (cache && Date.now() - cache.at < CACHE_TTL_MS) {
     return cache.ports;
   }
-  const ports = await enumerate();
+  const ports = process.platform === 'win32' ? await enumerateWin() : await enumerateLinux();
   cache = { at: Date.now(), ports };
   return ports;
 }
 
-async function enumerate(): Promise<SerialPortInfo[]> {
+async function enumerateWin(): Promise<SerialPortInfo[]> {
   const ps = await runProcess(
     'powershell.exe',
     ['-NoProfile', '-NonInteractive', '-Command', PS_SCRIPT],
@@ -60,22 +63,116 @@ async function enumerate(): Promise<SerialPortInfo[]> {
   return parseRegPorts(reg.output);
 }
 
+/**
+ * Linux/macOS：枚举 /dev 下的 tty 设备；适配器名称与 WCH 识别走 sysfs
+ * （/sys/class/tty/<name>/device 逐级上溯找 idVendor/manufacturer/product），
+ * 零子进程、零原生依赖。
+ */
+async function enumerateLinux(): Promise<SerialPortInfo[]> {
+  const out: SerialPortInfo[] = [];
+  let names: string[] = [];
+  try {
+    names = (await fs.promises.readdir('/dev')).filter((n) => LINUX_TTY_RE.test(n));
+  } catch {
+    return out;
+  }
+  for (const n of names) {
+    const info = await describeLinuxPort(`/dev/${n}`);
+    if (!out.some((p) => p.port === info.port)) {
+      out.push(info);
+    }
+  }
+  return sortPorts(out);
+}
+
+/** sysfs：从 device 目录向上（最多 4 层，USB-serial/CDC-ACM 层级不同）找 USB 信息。 */
+async function describeLinuxPort(devPath: string): Promise<SerialPortInfo> {
+  const ttyName = path.basename(devPath);
+  let dir: string | undefined;
+  try {
+    dir = await fs.promises.realpath(`/sys/class/tty/${ttyName}/device`);
+  } catch {
+    dir = `/sys/class/tty/${ttyName}/device`;
+  }
+  let vid = '';
+  let manufacturer = '';
+  let product = '';
+  for (let i = 0; i < 4 && dir; i++) {
+    const [v, m, p] = await Promise.all([
+      readSysFile(path.join(dir, 'idVendor')),
+      readSysFile(path.join(dir, 'manufacturer')),
+      readSysFile(path.join(dir, 'product')),
+    ]);
+    if (v) {
+      vid = v;
+      manufacturer = manufacturer || m;
+      product = product || p;
+      break;
+    }
+    const parent = path.dirname(dir);
+    if (parent === dir) {
+      break;
+    }
+    dir = parent;
+  }
+  const pnpId = await findByIdName(devPath);
+  const label = product || manufacturer || pnpId || '';
+  return {
+    port: devPath,
+    name: label || devPath,
+    pnpId: pnpId || undefined,
+    // WCH's USB VID is 1a86; also match by adapter name as a safety net.
+    isWch: vid === '1a86' || /CH34\d|WCH[- ]?Link|1a86/i.test(`${pnpId ?? ''} ${label}`),
+  };
+}
+
+async function readSysFile(p: string): Promise<string> {
+  try {
+    return (await fs.promises.readFile(p, 'utf-8')).trim();
+  } catch {
+    return '';
+  }
+}
+
+/** /dev/serial/by-id/<稳定名> 指向本端口时返回该名字（如 `usb-1a86_USB_Serial_…`）。 */
+async function findByIdName(devPath: string): Promise<string> {
+  try {
+    const byId = '/dev/serial/by-id';
+    for (const e of await fs.promises.readdir(byId)) {
+      const real = await fs.promises.realpath(path.join(byId, e)).catch(() => '');
+      if (real && real === devPath) {
+        return e;
+      }
+    }
+  } catch {
+    /* no by-id dir */
+  }
+  return '';
+}
+
 /** WCH's USB VID is 1A86; also match by adapter name as a safety net. */
 function isWchAdapter(text: string): boolean {
   return /VID_1A86/i.test(text) || /CH34\d|WCH[- ]?Link/i.test(text);
 }
 
 function portNumber(port: string): number {
-  return parseInt(port.replace(/^COM/i, ''), 10) || 0;
+  const m = /(\d+)$/.exec(port);
+  return m ? parseInt(m[1], 10) || 0 : 0;
 }
 
-/** WCH adapters first (the board the user is looking for), then by number. */
+/** 设备名去掉尾部序号（"COM7"→"COM"，"/dev/ttyUSB0"→"/dev/ttyUSB"）。 */
+function portBase(port: string): string {
+  return port.replace(/\d+$/, '');
+}
+
+/** WCH adapters first (the board the user is looking for), then by name+number. */
 function sortPorts(ports: SerialPortInfo[]): SerialPortInfo[] {
   return [...ports].sort((a, b) => {
     if (a.isWch !== b.isWch) {
       return a.isWch ? -1 : 1;
     }
-    return portNumber(a.port) - portNumber(b.port);
+    const base = portBase(a.port).localeCompare(portBase(b.port));
+    return base !== 0 ? base : portNumber(a.port) - portNumber(b.port);
   });
 }
 

@@ -1,8 +1,8 @@
 {
   "name": "mrs-toolbox",
   "displayName": "MRS Toolbox",
-  "description": "Build, flash and debug WCH projects in VS Code using the MounRiver Studio 2 toolchain. Create projects from templates or examples (RISC-V & ARM).",
-  "version": "0.2.17",
+  "description": "Build, flash and debug WCH projects in VS Code using the MounRiver Studio 2/3 toolchain. Create projects from templates or examples (RISC-V & ARM).",
+  "version": "0.2.18",
   "publisher": "mrs-toolbox",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -131,7 +131,7 @@
       },
       {
         "command": "mrsToolbox.openInMounRiver",
-        "title": "Open Project in MounRiver Studio 2",
+        "title": "Open Project in MounRiver Studio",
         "category": "MRS Toolbox"
       },
       {
@@ -276,7 +276,7 @@
       {
         "view": "mrsToolbox.home",
         "when": "!mrsToolbox.installed",
-        "contents": "No MounRiver Studio 2 installation found.\n[Setup: Locate MounRiver Studio](command:mrsToolbox.setup)\nTo learn more: [read the docs](https://www.mounriver.com/)"
+        "contents": "No MounRiver Studio installation found.\n[Setup: Locate MounRiver Studio](command:mrsToolbox.setup)\nTo learn more: [read the docs](https://www.mounriver.com/)"
       },
       {
         "view": "mrsToolbox.home",
@@ -286,7 +286,7 @@
       {
         "view": "mrsToolbox.examples",
         "when": "!mrsToolbox.installed",
-        "contents": "Examples need a MounRiver Studio 2 installation.\n[Run Setup](command:mrsToolbox.setup)"
+        "contents": "Examples need a MounRiver Studio installation.\n[Run Setup](command:mrsToolbox.setup)"
       },
       {
         "view": "mrsToolbox.examples",
@@ -316,14 +316,14 @@
       {
         "id": "mrs-toolbox.getting-started",
         "title": "MRS Toolbox 入门",
-        "description": "复用 MounRiver Studio 2 工具链，在 VS Code 里完成 WCH 工程的创建、编译、烧录与调试。",
+        "description": "复用 MounRiver Studio 2/3 工具链，在 VS Code 里完成 WCH 工程的创建、编译、烧录与调试。",
         "featuredFor": [
           "**/.mrs-project.json"
         ],
         "steps": [
           {
             "id": "locate",
-            "title": "定位 MounRiver Studio 2",
+            "title": "定位 MounRiver Studio",
             "description": "扩展复用本机已安装的 MRS2 工具链（不捆绑任何二进制）。运行 Setup 自动探测安装位置；探测失败可在配置页面手动浏览选择。",
             "media": {
               "markdown": "media/docs/walkthrough-setup.md"
@@ -498,7 +498,7 @@
         "mrsToolbox.mounriverStudioPath": {
           "type": "string",
           "default": "",
-          "markdownDescription": "MounRiver Studio 2 installation root. Leave empty for auto-detection (scans common locations and drives)."
+          "markdownDescription": "MounRiver Studio 2/3 installation root. Leave empty for auto-detection (Windows: common folders and all drives; Linux/macOS: `~/Downloads`, `~`, `/opt`, `/usr/share`, `/usr/local` — the `MRS-linux-x64` extraction dir itself works too)."
         },
         "mrsToolbox.examplesDirectory": {
           "type": "string",
@@ -570,7 +570,7 @@
         "mrsToolbox.ispToolPath": {
           "type": "string",
           "default": "",
-          "markdownDescription": "Path to `wchisp` executable for ISP flashing (USB/serial bootloader, no WCH-Link). Leave empty to look it up in MRS2's WCHISPTool directory (the recommended drop-in spot — its CH375DLL64.dll dependency already lives there) and on PATH. Get it from https://github.com/ch32-rs/wchisp/releases/tag/nightly."
+          "markdownDescription": "Path to `wchisp` executable for ISP flashing (USB/serial bootloader, no WCH-Link). Leave empty to look it up in MRS2's WCHISPTool directory (the recommended drop-in spot on Windows — its CH375DLL64.dll dependency already lives there) and on PATH. Windows: download from https://github.com/ch32-rs/wchisp/releases/tag/nightly; Linux: `cargo install wchisp` or grab a release binary (no DLL/driver needed — install the MRS2 udev rules or join the `dialout` group for device access)."
         },
         "mrsToolbox.aiSkillsDir": {
           "type": "string",

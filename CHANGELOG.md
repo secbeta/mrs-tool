@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.2.18
+
+适配 MRS3（MounRiver Studio 3，VS Code 版）：其 payload 布局与 MRS2 完全
+同构（resources/app/resources/win32/components/WCH/…），此前探测模式与主
+程序候选只认 MRS2，装了 MRS3 的机器扫不到、命令也拉不起 IDE。
+
+- **探测**：PROBE_PATTERNS 增加 MounRiver_Studio3 系列模式（含 mrs3 父目
+  录布局，实测 C:\tool\mrs3\MounRiver_Studio3）；Windows 盘符浅扫的 l1 目
+  录扩展匹配 mrs/mrs3 这类安装父目录（如 C:\mrs3\MounRiver_Studio3）
+- **主程序**：MRS_EXE_CANDIDATES 增加 MRS3 候选（Windows `MounRiver
+  Studio 3.exe`；Linux bin/ `mounriver-studio 3`），装哪个版本就拉起哪个
+- **工具链零改动**：ToolchainRegistry 本就动态解析 sub_manifest.json，
+  MRS3 清单里的 GCC8 / GCC12 / GCC15（riscv32-wch-elf-*）/ ARM 自动注册
+- 版本相关文案中性化：CLI 输出、Setup/启动提示、walkthrough、设置说明、
+  package.json description 等 "Studio 2" → "Studio 2/3" 或去版本号
+- README：简介与前置条件明确 MRS2/MRS3 双版本支持；标注 Linux 跨平台
+  支持自本版起（含「Linux 差异说明」一节）
+
 ## 0.2.17
 
 例程 skill 防读取截断重构：AI 只看到第一块芯片的例程、后面的芯片全部"失踪"

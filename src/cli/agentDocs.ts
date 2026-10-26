@@ -41,7 +41,9 @@ export function renderAgentDocs(proj: MrsProject, inst: MrsInstallation, version
 - 构建系统：工程根的 \`Makefile\`（由 \`.mrs-project.json\` 生成，**勿手改 Makefile**）
 - 产物：\`obj/${target}.{elf,hex,bin,lst,map}\`
 - 前置条件：本机装有 MounRiver Studio 2。下文 \`<MRS2>\` = 其安装根目录
-  （默认探测 \`C:/MounRiver/MounRiver_Studio2\` 一类路径；找不到就全盘搜 \`sub_manifest.json\`）。
+  （Windows 默认探测 \`C:/MounRiver/MounRiver_Studio2\` 一类路径；Linux 默认探测
+  \`~/Downloads\`、\`~\`、\`/opt\`、\`/usr/share\` 下的 \`MRS-linux-x64\`（解压包自带这一层）；
+  找不到就全盘搜 \`sub_manifest.json\`）。
 
 ## 方式一：mrs-toolbox CLI（自动探测 MRS2，推荐）
 
@@ -80,13 +82,14 @@ make -j8 CONFIG=release
 
 需开源命令行工具 wchisp（https://github.com/ch32-rs/wchisp ，扩展不捆绑）。
 Windows 上它依赖的 CH375DLL64.dll 与 ISP 驱动在 MRS2 的 WCHISPTool 目录
-已自带，把 wchisp.exe 放同目录即可。先让芯片进入 BOOT 下载模式
-（按住板上 BOOT 键再复位/上电；CH32V00x 无 USB ISP 且无 BOOT 引脚，
-只能串口 + 程序内设 FLASH_STATR.MODE 软复位进入）：
+已自带，把 wchisp.exe 放同目录即可；Linux 上 \`cargo install wchisp\` 或下载
+发行包，无需任何 DLL/驱动（无权限时装 udev 规则或加 dialout 组）。先让芯片
+进入 BOOT 下载模式（按住板上 BOOT 键再复位/上电；CH32V00x 无 USB ISP 且无
+BOOT 引脚，只能串口 + 程序内设 FLASH_STATR.MODE 软复位进入）：
 
 \`\`\`bash
 wchisp flash ${hex}                # USB 直连（CH58x/CH57x/CH55x 等）
-wchisp -s -p COM5 flash ${hex}     # 串口（--port 换成实际 COM 号）
+wchisp -s -p COM5 flash ${hex}     # 串口（Windows 用 COM 号，Linux 用 /dev/ttyUSB0）
 \`\`\`
 
 （装有 mrs-toolbox 时等价于 \`mrs-toolbox isp . [--port COM5]\`。）

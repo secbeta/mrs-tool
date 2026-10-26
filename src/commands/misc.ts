@@ -1,5 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
+import { IS_WINDOWS } from '../constants';
+import type { MrsInstallation } from '../locator/mrsInstallation';
 import type { ToolboxContext } from '../toolbox';
 import { pathExists } from '../util/fsx';
 import { runProcess } from '../util/proc';
@@ -18,7 +20,7 @@ export async function runOpenInMounRiver(tbx: ToolboxContext): Promise<void> {
   }
   // MRS2 (VSCode fork) accepts a folder argument; .wvproj is not generated.
   void vscode.window.withProgress(
-    { location: vscode.ProgressLocation.Notification, title: '启动 MounRiver Studio 2…' },
+    { location: vscode.ProgressLocation.Notification, title: '启动 MounRiver Studio…' },
     () =>
       new Promise<void>((resolve) => {
         // Detached spawn; the IDE opens on its own.
@@ -28,7 +30,14 @@ export async function runOpenInMounRiver(tbx: ToolboxContext): Promise<void> {
           shell: false,
         });
         child.on('spawn', () => resolve());
-        child.on('error', () => resolve());
+        child.on('error', (err: Error) => {
+          // Linux 解压包常见：主程序没有可执行位（tar 保留与否取决于来源）。
+          const hint = /EACCES|permission|denied/i.test(err.message)
+            ? `（无执行权限，先运行 chmod +x "${exe}"）`
+            : '';
+          void vscode.window.showErrorMessage(`启动 MRS2 失败: ${err.message}${hint}`);
+          resolve();
+        });
         setTimeout(resolve, 3000);
       }),
   );
@@ -57,7 +66,12 @@ export async function runOpenWchLinkUtility(tbx: ToolboxContext): Promise<void> 
 /** Launch one of the GUI utilities bundled with MRS2, detached. */
 async function launchTool(exe: string, label: string): Promise<void> {
   if (!(await pathExists(exe))) {
-    void vscode.window.showErrorMessage(`未找到 ${label}: ${exe}`);
+    void vscode.window.showErrorMessage(
+      IS_WINDOWS
+        ? `未找到 ${label}: ${exe}`
+        : `${label} 是 Windows 版 MRS2 自带的 GUI 工具，Linux 安装包不包含；` +
+            `命令行等价能力仍可用（烧录用 Flash / Flash via ISP，串口用串口终端 Serial Monitor）。`,
+    );
     return;
   }
   const child = require('child_process').spawn(exe, [], {
@@ -130,6 +144,12 @@ export async function runOpenTouchKeyTool(tbx: ToolboxContext): Promise<void> {
 
 /** Windows 设备管理器（查串口号 / 驱动状态）. */
 export function runOpenDeviceManager(): void {
+  if (!IS_WINDOWS) {
+    void vscode.window.showInformationMessage(
+      '设备管理器是 Windows 工具。Linux 查看串口/USB 设备：终端运行 `lsusb`、`dmesg | tail`（插拔对比），串口列表用「Show Serial Ports」。',
+    );
+    return;
+  }
   const child = require('child_process').spawn('cmd.exe', ['/c', 'start', '', 'devmgmt.msc'], {
     detached: true,
     stdio: 'ignore',
@@ -220,6 +240,12 @@ const BLEDEBUG_DOWNLOAD = 'https://www.wch.cn/downloads/BLEDebug_ZIP.html';
 
 /** WCH 官方 BLE 调试助手（独立下载的 GUI 工具，MRS2 不自带）。 */
 export async function runOpenBleDebug(): Promise<void> {
+  if (!IS_WINDOWS) {
+    void vscode.window.showInformationMessage(
+      'WCH BLEDebug 是 Windows GUI 工具（自解压 EXE 发行），Linux 无法运行；BLE 调试可用系统 bluetoothctl 等工具。',
+    );
+    return;
+  }
   let exe = vscode.workspace.getConfiguration('mrsToolbox').get<string>('bleDebugPath', '');
   if (!exe) {
     const r = await runProcess('where.exe', ['BLEDebug.exe'], { timeoutMs: 5000 });
@@ -249,6 +275,10 @@ export async function runOpenBleDebug(): Promise<void> {
 export async function runInstallLinkDriver(tbx: ToolboxContext): Promise<void> {
   const inst = await tbx.ensureInstallation();
   if (!inst) {
+    return;
+  }
+  if (!IS_WINDOWS) {
+    await showUdevHelp(inst);
     return;
   }
   const available = inst.linkDriverSetups.filter((d) => {
@@ -286,6 +316,37 @@ export async function runInstallLinkDriver(tbx: ToolboxContext): Promise<void> {
     void vscode.window.showErrorMessage(`启动安装程序失败: ${err.message}`);
   });
   child.unref();
+}
+
+/**
+ * Linux 的"装驱动"等价物：安装 MRS2 自带的 udev 规则（WCH-Link / 串口
+ * 免 root 可用）。写 /etc 需要管理员权限，扩展不静默提权 —— 把现成的
+ * 安装命令给用户复制到终端执行。
+ */
+async function showUdevHelp(inst: MrsInstallation): Promise<void> {
+  const rules = inst.udevRuleFiles;
+  const RULES_DIR = '/etc/udev/rules.d';
+  if (rules.length === 0) {
+    void vscode.window.showInformationMessage(
+      `Linux 不需要安装 Windows 驱动：WCH-Link / 串口的可用性由 udev 规则保证。` +
+        `未在 ${inst.root} 下找到 *.rules 文件（expected beforeinstall/），请从 MRS2 安装包的 beforeinstall 目录获取。`,
+    );
+    return;
+  }
+  const cmd =
+    `sudo cp ${rules.map((r) => `"${r}"`).join(' ')} ${RULES_DIR}/ && ` +
+    'sudo udevadm control --reload-rules && sudo udevadm trigger';
+  const pick = await vscode.window.showInformationMessage(
+    'Linux 不需要 Windows 驱动：把 MRS2 自带的 udev 规则装入系统后，WCH-Link / 串口即免 root、免驱动可用。已找到规则文件：\n' +
+      rules.join('\n'),
+    '复制安装命令',
+  );
+  if (pick === '复制安装命令') {
+    await vscode.env.clipboard.writeText(cmd);
+    void vscode.window.showInformationMessage(
+      `已复制安装命令，粘贴到终端执行（需要 sudo，完成前请勿拔插设备）：\n${cmd}`,
+    );
+  }
 }
 
 /** Tree helper: describe the active project for tooltips. */

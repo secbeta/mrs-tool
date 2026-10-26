@@ -56,17 +56,26 @@ export function ispFlashArgs(image: string, opts: IspFlashOptions = {}): string[
   return args;
 }
 
-/** 安装指引：wchisp 不随扩展分发，但 MRS2 目录里已有其 DLL 依赖与驱动。 */
+/** 安装指引：wchisp 不随扩展分发；Windows 下 MRS2 目录里已有其 DLL 依赖与驱动。 */
 export function ispToolInstallHint(inst?: MrsInstallation): string {
+  const isWin = process.platform === 'win32';
   const lines = [
     '未找到 wchisp —— USB/串口 Bootloader 直连烧录（ISP）的命令行工具，扩展不捆绑二进制。',
-    `下载 Windows 版: ${WCHISP_DOWNLOAD}（需 VC 运行库，页面有链接）`,
+    isWin
+      ? `下载 Windows 版: ${WCHISP_DOWNLOAD}（需 VC 运行库，页面有链接）`
+      : `安装: cargo install wchisp，或从 ${WCHISP_DOWNLOAD} 下载 Linux 版（注意 chmod +x）`,
   ];
   if (inst) {
-    lines.push(
-      `MRS2 的 ISP 目录已自带 CH375DLL64.dll 与驱动: ${path.dirname(inst.ispToolStudioExe)}`,
-      '把 wchisp.exe 放进该目录即可复用（无需再装驱动）；或用设置 mrsToolbox.ispToolPath / CLI --tool 指定其位置',
-    );
+    if (isWin) {
+      lines.push(
+        `MRS2 的 ISP 目录已自带 CH375DLL64.dll 与驱动: ${path.dirname(inst.ispToolStudioExe)}`,
+        '把 wchisp.exe 放进该目录即可复用（无需再装驱动）；或用设置 mrsToolbox.ispToolPath / CLI --tool 指定其位置',
+      );
+    } else {
+      lines.push(
+        'Linux 无需任何 DLL/驱动：wchisp 经 USB（libusb）或串口直连；无权限时先装 udev 规则或加 dialout 组',
+      );
+    }
   } else {
     lines.push('放到 PATH 可见的位置，或用设置 mrsToolbox.ispToolPath / CLI --tool 指定其位置');
   }

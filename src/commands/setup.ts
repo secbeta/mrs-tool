@@ -23,7 +23,7 @@ export async function runSetup(tbx: ToolboxContext, forceBrowse = false): Promis
 
   const inst = await tbx.ensureInstallation(true);
   if (!inst) {
-    ch.appendLine('未找到可用的 MounRiver Studio 2 安装。');
+    ch.appendLine('未找到可用的 MounRiver Studio 2/3 安装。');
     ch.appendLine('请运行 "MRS Toolbox: Set MounRiver Studio Path" 手动选择安装目录。');
     return;
   }

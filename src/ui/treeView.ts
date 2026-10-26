@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { IS_WINDOWS } from '../constants';
 import type { ToolboxContext } from '../toolbox';
 import { listSerialPorts } from '../serial/serialPorts';
 
@@ -141,17 +142,32 @@ export class ToolboxTree implements vscode.TreeDataProvider<Row> {
       icon: 'tools',
       children: [
         { kind: 'tool', label: '在 MRS2 中打开', icon: 'link-external', command: 'mrsToolbox.openInMounRiver' },
-        { kind: 'tool', label: 'WCH-LinkUtility', description: 'WCH-Link 本地烧录', icon: 'zap', command: 'mrsToolbox.openWchLinkUtility' },
-        { kind: 'tool', label: 'ISP 编程工具', description: 'USB 直连烧录（CH58x 等）', icon: 'rocket', command: 'mrsToolbox.openIspTool' },
-        { kind: 'tool', label: '触摸按键校准工具', icon: 'symbol-ruler', command: 'mrsToolbox.openTouchKeyTool' },
-        { kind: 'tool', label: 'HEX/BIN 转换合并工具', icon: 'file-binary', command: 'mrsToolbox.openHexBinStudio' },
-        { kind: 'tool', label: '设备管理器', icon: 'plug', command: 'mrsToolbox.openDeviceManager' },
-        { kind: 'tool', label: '串口调试工具', description: 'COMTransmit', icon: 'terminal', command: 'mrsToolbox.openComTransmit' },
+        // 以下 GUI 工具仅随 Windows 版 MRS2 发行，Linux 上隐藏（命令仍可
+        // 手动触发，misc.ts 会给出说明而非报错）。
+        ...(IS_WINDOWS
+          ? ([
+              { kind: 'tool', label: 'WCH-LinkUtility', description: 'WCH-Link 本地烧录', icon: 'zap', command: 'mrsToolbox.openWchLinkUtility' },
+              { kind: 'tool', label: 'ISP 编程工具', description: 'USB 直连烧录（CH58x 等）', icon: 'rocket', command: 'mrsToolbox.openIspTool' },
+              { kind: 'tool', label: '触摸按键校准工具', icon: 'symbol-ruler', command: 'mrsToolbox.openTouchKeyTool' },
+              { kind: 'tool', label: 'HEX/BIN 转换合并工具', icon: 'file-binary', command: 'mrsToolbox.openHexBinStudio' },
+              { kind: 'tool', label: '设备管理器', icon: 'plug', command: 'mrsToolbox.openDeviceManager' },
+              { kind: 'tool', label: '串口调试工具', description: 'COMTransmit', icon: 'terminal', command: 'mrsToolbox.openComTransmit' },
+            ] as Row[])
+          : []),
         { kind: 'tool', label: '串口终端', description: 'Serial Monitor', icon: 'terminal', command: 'mrsToolbox.openSerialTerminal' },
-        { kind: 'tool', label: 'BLE 设备扫描', description: '扫描广播并复制 MAC', icon: 'radio-tower', command: 'mrsToolbox.scanBleDevices' },
-        { kind: 'tool', label: 'BLE 调试助手', description: 'BLEDebug（官方 GUI）', icon: 'bluetooth', command: 'mrsToolbox.openBleDebug' },
-        { kind: 'tool', label: 'Keil 工程转换器', icon: 'sync', command: 'mrsToolbox.openKeilConvert' },
-        { kind: 'tool', label: '安装链接驱动…', icon: 'zap', command: 'mrsToolbox.installLinkDriver' },
+        ...(IS_WINDOWS
+          ? ([
+              { kind: 'tool', label: 'BLE 设备扫描', description: '扫描广播并复制 MAC', icon: 'radio-tower', command: 'mrsToolbox.scanBleDevices' },
+              { kind: 'tool', label: 'BLE 调试助手', description: 'BLEDebug（官方 GUI）', icon: 'bluetooth', command: 'mrsToolbox.openBleDebug' },
+              { kind: 'tool', label: 'Keil 工程转换器', icon: 'sync', command: 'mrsToolbox.openKeilConvert' },
+            ] as Row[])
+          : []),
+        {
+          kind: 'tool',
+          label: IS_WINDOWS ? '安装链接驱动…' : '安装 udev 规则（设备权限）…',
+          icon: 'zap',
+          command: 'mrsToolbox.installLinkDriver',
+        },
       ],
     });
 
@@ -159,7 +175,7 @@ export class ToolboxTree implements vscode.TreeDataProvider<Row> {
       kind: 'section',
       label: '串口',
       icon: 'plug',
-      description: '展开查看已连接的 COM 口',
+      description: IS_WINDOWS ? '展开查看已连接的 COM 口' : '展开查看已连接的串口（/dev/tty*）',
       collapsed: true,
       loadChildren: async (): Promise<Row[]> => {
         const ports = await listSerialPorts();

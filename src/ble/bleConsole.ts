@@ -377,6 +377,9 @@ export function parseGattTable(text: string): BleServiceInfo[] {
 }
 
 export function detectBleHint(text: string): string | undefined {
+  if (/ERR\|OS/.test(text)) {
+    return 'BLE 调试目前仅支持 Windows（依赖 WinRT 蓝牙栈）；Linux 可用系统 bluetoothctl 或 nRF Connect 等工具';
+  }
   if (/ERR\|RADIO_OFF/.test(text)) {
     return '系统蓝牙未开启：设置 → 蓝牙和其他设备 → 打开蓝牙后重试';
   }
@@ -411,6 +414,11 @@ async function runBlePs(
   timeoutMs: number,
   onLine?: (l: string) => void,
 ): Promise<{ code: number | null; output: string }> {
+  // BLE 后端 = PowerShell + WinRT 投影，Windows 独有；其他平台直接给出
+  // 明确错误（detectBleHint 转译），而不是让 powershell 启动失败刷屏。
+  if (process.platform !== 'win32') {
+    return { code: -1, output: 'ERR|OS|BLE 调试目前仅支持 Windows（WinRT 蓝牙栈）' };
+  }
   // 走临时 .ps1 + -File，而不是 -Command 内联：Windows 安全中心的行为防御
   // 会拦"命令行携带本脚本这段内容"的 powershell 启动（spawn EPERM，2026-09-10
   // 实测）；-File 的命令行干净，内容侧 AMSI 正常放行。
@@ -468,8 +476,11 @@ export async function runBleSession(
   return { ok: false, output: r.output, hint: detectBleHint(r.output) };
 }
 
-/** 蓝牙适配器名（doctor 展示用）；无则 undefined。 */
+/** 蓝牙适配器名（doctor 展示用）；无则 undefined。非 Windows 平台不探测。 */
 export async function bleRadioName(): Promise<string | undefined> {
+  if (process.platform !== 'win32') {
+    return undefined;
+  }
   const r = await runProcess('powershell.exe',
     ['-NoProfile', '-NonInteractive', '-Command',
       '[Console]::OutputEncoding=[System.Text.Encoding]::UTF8; ' +
